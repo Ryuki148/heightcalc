@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Height & Weight Growth Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .card {
+            background-color: #1f2937; /* bg-gray-800 */
+            border: 1px solid #374151; /* border-gray-700 */
+            transition: all 0.3s ease;
+        }
+        .stat-label {
+            color: #9ca3af; /* text-gray-400 */
+        }
+        .stat-value {
+            color: #e5e7eb; /* text-gray-200 */
+            font-weight: 600;
+        }
+        .btn {
+            transition: all 0.2s ease;
+        }
+        .rebirth-flash {
+            animation: flash 1s ease;
+        }
+        @keyframes flash {
+            0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); background-color: #1f2937; }
+            50% { box-shadow: 0 0 20px 10px rgba(52, 211, 153, 0); background-color: #34d39930; }
+            100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); background-color: #1f2937; }
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+        .mode-toggle-bg {
+            background-color: #374151; /* bg-gray-700 */
+        }
+        .mode-toggle-btn {
+            background-color: #4b5563; /* bg-gray-600 */
+        }
+        .mode-toggle-btn.active {
+            background-color: #6366f1; /* bg-indigo-500 */
+            color: white;
+        }
+    </style>
+</head>
+<body class="text-white p-4 sm:p-6 md:p-8">
+
+    <div id="notification-bar" class="fixed top-5 right-5 bg-red-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-100">Growth Calculator</h1>
+            <p class="text-gray-400 mt-2">Simulate linear and exponential growth models.</p>
+        </header>
+
+        <div class="flex justify-center items-center flex-wrap gap-3 mb-8 p-4 bg-gray-800/50 rounded-xl border border-gray-700">
+            <span class="font-semibold mr-4">Simulate:</span>
+            <button onclick="simulateDays(1)" class="btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg">1 Day</button>
+            <button onclick="simulateDays(10)" class="btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg">10 Days</button>
+            <button onclick="simulateDays(100)" class="btn bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg">100 Days</button>
+            <button onclick="simulateDays(1000)" class="btn bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">1,000 Days</button>
+            
+            <input type="number" id="custom-days-input" placeholder="Enter days..." class="w-32 bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500">
+            <button onclick="simulateCustomDays()" class="btn bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg">Simulate</button>
+
+            <button onclick="resetAll()" class="btn bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Reset All</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- BOY CARD -->
+            <div id="boy-card" class="card rounded-xl p-6 shadow-lg">
+                <h2 class="text-2xl font-bold text-emerald-400 mb-4">Boy</h2>
+                <div id="boy-setup">
+                    <!-- Mode Selector -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Growth Mode</label>
+                        <div class="flex mode-toggle-bg rounded-lg p-1">
+                            <button onclick="toggleMode('boy', 'linear')" id="boy-mode-linear" class="mode-toggle-btn w-1/2 rounded-md py-1 text-gray-300 active">Linear (Rebirth)</button>
+                            <button onclick="toggleMode('boy', 'exponential')" id="boy-mode-exponential" class="mode-toggle-btn w-1/2 rounded-md py-1 text-gray-300">Exponential</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Exponential Growth Input -->
+                    <div id="boy-exponential-options" class="hidden mb-4">
+                        <label for="boy-growth-percent" class="block text-sm font-medium text-gray-400 mb-1">Daily Growth (%)</label>
+                        <input type="number" id="boy-growth-percent" value="2.5" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="boy-height-input" class="block text-sm font-medium text-gray-400 mb-1">Initial Height (m)</label>
+                            <input type="number" id="boy-height-input" value="1.7" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label for="boy-weight-input" class="block text-sm font-medium text-gray-400 mb-1">Initial Weight (kg)</label>
+                            <input type="number" id="boy-weight-input" value="65" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                    </div>
+                    <button onclick="initializeCharacter('boy')" class="w-full btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg">Start Simulation</button>
+                </div>
+                <div id="boy-stats" class="hidden space-y-3">
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Days Passed:</span><span id="boy-days" class="stat-value text-xl">0</span></div>
+                    <div id="boy-rebirth-stat" class="flex justify-between items-baseline"><span class="stat-label">Rebirths:</span><span id="boy-rebirths" class="stat-value text-xl">0</span></div>
+                    <hr class="border-gray-600">
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Current Height:</span><span id="boy-current-height" class="stat-value text-xl">0 m</span></div>
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Current Weight:</span><span id="boy-current-weight" class="stat-value text-xl">0 kg</span></div>
+                    <div id="boy-base-height-stat" class="flex justify-between items-baseline"><span class="stat-label">Base Height:</span><span id="boy-base-height" class="stat-value text-lg">0 m</span></div>
+                </div>
+            </div>
+
+            <!-- GIRL CARD -->
+            <div id="girl-card" class="card rounded-xl p-6 shadow-lg">
+                <h2 class="text-2xl font-bold text-pink-400 mb-4">Girl</h2>
+                 <div id="girl-setup">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Growth Mode</label>
+                        <div class="flex mode-toggle-bg rounded-lg p-1">
+                            <button onclick="toggleMode('girl', 'linear')" id="girl-mode-linear" class="mode-toggle-btn w-1/2 rounded-md py-1 text-gray-300 active">Linear (Rebirth)</button>
+                            <button onclick="toggleMode('girl', 'exponential')" id="girl-mode-exponential" class="mode-toggle-btn w-1/2 rounded-md py-1 text-gray-300">Exponential</button>
+                        </div>
+                    </div>
+                    <div id="girl-exponential-options" class="hidden mb-4">
+                        <label for="girl-growth-percent" class="block text-sm font-medium text-gray-400 mb-1">Daily Growth (%)</label>
+                        <input type="number" id="girl-growth-percent" value="2.5" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div><label for="girl-height-input" class="block text-sm font-medium text-gray-400 mb-1">Initial Height (m)</label><input type="number" id="girl-height-input" value="1.6" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-pink-500 focus:border-pink-500"></div>
+                        <div><label for="girl-weight-input" class="block text-sm font-medium text-gray-400 mb-1">Initial Weight (kg)</label><input type="number" id="girl-weight-input" value="55" class="w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 focus:ring-pink-500 focus:border-pink-500"></div>
+                    </div>
+                    <button onclick="initializeCharacter('girl')" class="w-full btn bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg">Start Simulation</button>
+                </div>
+                 <div id="girl-stats" class="hidden space-y-3">
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Days Passed:</span><span id="girl-days" class="stat-value text-xl">0</span></div>
+                    <div id="girl-rebirth-stat" class="flex justify-between items-baseline"><span class="stat-label">Rebirths:</span><span id="girl-rebirths" class="stat-value text-xl">0</span></div>
+                    <hr class="border-gray-600">
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Current Height:</span><span id="girl-current-height" class="stat-value text-xl">0 m</span></div>
+                    <div class="flex justify-between items-baseline"><span class="stat-label">Current Weight:</span><span id="girl-current-weight" class="stat-value text-xl">0 kg</span></div>
+                    <div id="girl-base-height-stat" class="flex justify-between items-baseline"><span class="stat-label">Base Height:</span><span id="girl-base-height" class="stat-value text-lg">0 m</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const characters = {
+            boy: { isInitialized: false, growthMode: 'linear' },
+            girl: { isInitialized: false, growthMode: 'linear' }
+        };
+        const EPSILON = 0.0000001;
+        const METRIC_PREFIXES = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+        const WEIGHT_METRIC_PREFIXES = ['g', 'kg', 'Mg', 'Gg', 'Tg', 'Pg', 'Eg', 'Zg', 'Yg'];
+        
+        function showNotification(message, isError = true) {
+            const notifBar = document.getElementById('notification-bar');
+            notifBar.textContent = message;
+            notifBar.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300 pointer-events-none ${isError ? 'bg-red-600' : 'bg-teal-600'}`;
+            notifBar.classList.remove('opacity-0');
+            setTimeout(() => { notifBar.classList.add('opacity-0'); }, 3000);
+        }
+
+        function toggleMode(id, mode) {
+            characters[id].growthMode = mode;
+            document.getElementById(`${id}-mode-linear`).classList.toggle('active', mode === 'linear');
+            document.getElementById(`${id}-mode-exponential`).classList.toggle('active', mode === 'exponential');
+            document.getElementById(`${id}-exponential-options`).classList.toggle('hidden', mode !== 'exponential');
+        }
+
+        function formatWithMetricPrefix(num, unit) {
+            if (num === 0) return `0 ${unit}`;
+            if (num < 1) return `${num.toFixed(3)} ${unit}`;
+            let tier = 0, workingNum = num;
+            while (workingNum >= 1000 && tier < METRIC_PREFIXES.length - 1) {
+                workingNum /= 1000;
+                tier++;
+            }
+            return `${workingNum.toFixed(3)} ${METRIC_PREFIXES[tier]}${unit}`;
+        }
+        
+        function formatWeight(valueInKg) {
+            if (valueInKg === 0) return '0 kg';
+            if (valueInKg > 0 && valueInKg < 1) return `${(valueInKg * 1000).toFixed(2)} g`;
+            let tier = 1, workingNum = valueInKg;
+            while (workingNum >= 1000 && tier < WEIGHT_METRIC_PREFIXES.length - 1) {
+                workingNum /= 1000;
+                tier++;
+            }
+            return `${workingNum.toFixed(3)} ${WEIGHT_METRIC_PREFIXES[tier]}`;
+        }
+
+        function initializeCharacter(id) {
+            const initialHeight = parseFloat(document.getElementById(`${id}-height-input`).value);
+            const initialWeight = parseFloat(document.getElementById(`${id}-weight-input`).value);
+            const growthPercent = parseFloat(document.getElementById(`${id}-growth-percent`).value);
+            
+            if (isNaN(initialHeight) || initialHeight <= 0 || isNaN(initialWeight) || initialWeight <= 0) {
+                return showNotification('Please enter valid, positive numbers for height and weight.');
+            }
+            if (characters[id].growthMode === 'exponential' && (isNaN(growthPercent) || growthPercent <= 0)) {
+                return showNotification('Please enter a valid, positive growth percentage.');
+            }
+
+            characters[id] = {
+                isInitialized: true,
+                growthMode: characters[id].growthMode,
+                baseHeight: initialHeight,
+                currentHeight: initialHeight,
+                baseWeight: initialWeight,
+                currentWeight: initialWeight,
+                days: 0,
+                rebirths: 0,
+                growthPercent: growthPercent / 100
+            };
+
+            document.getElementById(`${id}-setup`).classList.add('hidden');
+            document.getElementById(`${id}-stats`).classList.remove('hidden');
+            updateUI(id);
+        }
+        
+        function resetAll() {
+            for (const id in characters) {
+                characters[id].isInitialized = false;
+                document.getElementById(`${id}-setup`).classList.remove('hidden');
+                document.getElementById(`${id}-stats`).classList.add('hidden');
+            }
+            showNotification("Simulation has been reset.", false);
+        }
+
+        function simulateDays(numDays) {
+            if (numDays > 100000) showNotification('Simulating over 100,000 days at once may freeze the browser.');
+            for (let i = 0; i < numDays; i++) {
+                for (const id in characters) {
+                    if (characters[id].isInitialized) growCharacter(id);
+                }
+            }
+            for (const id in characters) {
+                if (characters[id].isInitialized) updateUI(id);
+            }
+        }
+
+        function simulateCustomDays() {
+            const daysInput = document.getElementById('custom-days-input');
+            const numDays = parseInt(daysInput.value, 10);
+            if (isNaN(numDays) || numDays <= 0) return showNotification('Please enter a valid, positive number of days.');
+            simulateDays(numDays);
+            daysInput.value = '';
+        }
+        
+        function growCharacter(id) {
+            const char = characters[id];
+            char.days++;
+            const oldHeight = char.currentHeight;
+
+            if (char.growthMode === 'linear') {
+                char.currentHeight += char.baseHeight * 0.025;
+                const targetHeight = char.baseHeight * 10;
+                if (char.currentHeight >= targetHeight - EPSILON) {
+                    char.rebirths++;
+                    char.baseHeight = char.currentHeight;
+                    const card = document.getElementById(`${id}-card`);
+                    card.classList.add('rebirth-flash');
+                    setTimeout(() => card.classList.remove('rebirth-flash'), 1000);
+                }
+            } else { // Exponential
+                char.currentHeight *= (1 + char.growthPercent);
+            }
+
+            if(oldHeight > 0) {
+                char.currentWeight *= Math.pow(char.currentHeight / oldHeight, 3);
+            }
+        }
+
+        function updateUI(id) {
+            if (!characters[id].isInitialized) return;
+            const char = characters[id];
+            const isLinear = char.growthMode === 'linear';
+
+            document.getElementById(`${id}-rebirth-stat`).classList.toggle('hidden', !isLinear);
+            document.getElementById(`${id}-base-height-stat`).classList.toggle('hidden', !isLinear);
+            
+            document.getElementById(`${id}-days`).textContent = char.days.toLocaleString();
+            if (isLinear) {
+                document.getElementById(`${id}-rebirths`).textContent = char.rebirths.toLocaleString();
+                document.getElementById(`${id}-base-height`).textContent = formatWithMetricPrefix(char.baseHeight, 'm');
+            }
+            document.getElementById(`${id}-current-height`).textContent = formatWithMetricPrefix(char.currentHeight, 'm');
+            document.getElementById(`${id}-current-weight`).textContent = formatWeight(char.currentWeight);
+        }
+    </script>
+</body>
+</html>
